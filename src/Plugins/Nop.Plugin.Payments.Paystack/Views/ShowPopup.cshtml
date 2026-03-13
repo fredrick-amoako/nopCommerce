@@ -1,7 +1,7 @@
 @model Nop.Plugin.Payments.Paystack.Models.ShowPopupModel
 
 @{
-    Layout = "";
+    Layout = "~/Views/Shared/_ColumnsOne.cshtml";
 }
 
 <style>
@@ -42,41 +42,37 @@
         <h1>Processing Payment</h1>
     </div>
     <div class="page-body">
-        <div class="center-2">
-            <div class="payment-processing">
-                <div class="loading-container" style="text-align: center; background: white; padding: 50px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 400px;">
-                    <div class="spinner" style="border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
-                    <h2 style="color: #333; margin-bottom: 10px;">Initializing Payment...</h2>
-                    <p style="color: #666; margin: 0;">Please wait while we set up your secure payment.</p>
-                </div>
+        <div class="payment-processing">
+            <div class="loading-container" style="text-align: center; background: white; padding: 50px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 400px;">
+                <div class="spinner" style="border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
+                <h2 style="color: #333; margin-bottom: 10px;">Initializing Payment...</h2>
+                <p style="color: #666; margin: 0;">Please wait while we set up your secure payment.</p>
             </div>
         </div>
     </div>
 </div>
 
-
-@Html.Raw(@"
-<script src=""https://js.paystack.co/v2/inline.js""></script>
-    <script>
+<script src="https://js.paystack.co/v2/inline.js" asp-location="Footer"></script>
+<script asp-location="Footer">
     const paystackConfig = {
-        accessCode: '" + Model.AccessCode + @"',
-        orderId: '" + Model.OrderId + @"',
-        callbackUrl: '" + Model.CallbackUrl + @"'
+        accessCode: "@Model.AccessCode",
+        orderId: @Model.OrderId,
+        callbackUrl: "@Model.CallbackUrl"
     };
 
     function startPaystack() {
-        var handler = new PaystackPop();
+        const handler = new PaystackPop();
         handler.resumeTransaction(paystackConfig.accessCode, {
             onSuccess: function(transaction) {
-                window.location.href = paystackConfig.callbackUrl + '?reference=' + transaction.reference;
+                window.location.href = `${paystackConfig.callbackUrl}?reference=${transaction.reference}`;
             },
             onCancel: function() {
-                window.location.href = '/paystack/cancel-payment?orderId=" + Model.OrderId + @"';
+                window.location.href = `/paystack/cancel-payment?orderId=${paystackConfig.orderId}`;
             },
             onError: function(error) {
                 alert('Payment error: ' + (error.message || 'Unknown error'));
                 setTimeout(function() {
-                    window.location.href = '/paystack/cancel-payment?orderId=" + Model.OrderId + @"';
+                    window.location.href = `/paystack/cancel-payment?orderId=${paystackConfig.orderId}`;
                 }, 3000);
             }
         });
@@ -84,4 +80,3 @@
 
     startPaystack();
 </script>
-")
