@@ -1,0 +1,78 @@
+# nopCommerce Production Docker Compose
+# Usage: docker compose -f docker-compose.prod.yml up --build -d
+
+services:
+  nopcommerce:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: nopcommerce_app
+    restart: unless-stopped
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      # NOTE: nopCommerce does NOT use standard ASP.NET ConnectionStrings.
+      # Database connection is configured via the install wizard on first boot
+      # and stored in App_Data/appsettings.json (persisted via Docker volume).
+      - DOTNET_GCHeapHardLimit=500000000  # ~500MB heap limit
+    ports:
+      - "127.0.0.1:5000:80"  # Bind only to localhost; Nginx will proxy to this
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - nopcommerce_app_data:/app/App_Data
+      - nopcommerce_plugins:/app/Plugins
+      - nopcommerce_images:/app/wwwroot/images
+      - nopcommerce_logs:/app/logs
+    networks:
+      - nopcommerce_network
+    mem_limit: 700m
+    memswap_limit: 700m
+    healthcheck:
+      # Uses the /health endpoint from HealthCheckStartup.cs
+      test: ["CMD-SHELL", "wget -q --spider http://localhost/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s  # nopCommerce takes ~60-90s to start on first boot
+
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: nopcommerce_db
+    restart: unless-stopped
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=${DB_PASSWORD}
+      - MSSQL_PID=Express
+      - MSSQL_MEMORY_LIMIT_MB=600
+    volumes:
+      - mssql_data:/var/opt/mssql
+    # NOTE: Do NOT expose port 1433 to the host in production.
+    # SQL Server is only reachable within the Docker network.
+    networks:
+      - nopcommerce_network
+    mem_limit: 800m
+    memswap_limit: 800m
+    healthcheck:
+      test: ["CMD-SHELL", "grep -q 'ready for client connections' /var/opt/mssql/log/errorlog || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 45s
+
+volumes:
+  nopcommerce_app_data:
+    name: nopcommerce_app_data
+  nopcommerce_plugins:
+    name: nopcommerce_plugins
+  nopcommerce_images:
+    name: nopcommerce_images
+  nopcommerce_logs:
+    name: nopcommerce_logs
+  mssql_data:
+    name: nopcommerce_mssql_data
+
+networks:
+  nopcommerce_network:
+    driver: bridge
+    name: nopcommerce_network

@@ -1,0 +1,290 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Cost-Optimized EC2 Instance for nopCommerce (Single Instance Architecture)
+
+Parameters:
+  InstanceType:
+    Type: String
+    Default: t3.small
+    AllowedValues:
+      - t3.micro    # 2 vCPU burst, 1 GB RAM - tight but possible
+      - t3.small    # 2 vCPU burst, 2 GB RAM - recommended
+      - t3.medium   # 2 vCPU burst, 4 GB RAM - comfortable
+    Description: EC2 instance type (t3.small recommended minimum)
+
+  KeyPairName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: EC2 KeyPair for SSH access
+
+  ImageId:
+    Type: AWS::EC2::Image::Id
+    Default: ami-0c7217cdde317cfec  # Ubuntu 22.04 LTS (x86_64) - us-east-1 ONLY
+    Description: Ubuntu 22.04 LTS AMI (default is us-east-1 only)
+
+  YourIpAddress:
+    Type: String
+    Description: Your IP address for SSH access (CIDR format, e.g., 203.0.113.0/32)
+    AllowedPattern: '(\d{1,3}\.){3}\d{1,3}/\d{1,2}'
+    ConstraintDescription: Must be a valid CIDR IP address (e.g., 203.0.113.0/32)
+
+Resources:
+  # ============================================================
+  # VPC Resources (minimal - single public subnet)
+  # ============================================================
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-vpc'
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-igw'
+
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.1.0/24
+      MapPublicIpOnLaunch: true
+      AvailabilityZone: !Select [0, !GetAZs '']
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-public-subnet'
+
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-public-rt'
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref RouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  SubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      RouteTableId: !Ref RouteTable
+
+  # ============================================================
+  # Security Group - Restricted Access
+  # ============================================================
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub 'Security group for ${AWS::StackName} single-instance deployment'
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        # SSH - Restrict to your IP only
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref YourIpAddress
+          Description: SSH access from your IP only
+        # HTTP - Public
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+          Description: HTTP public access
+        # HTTPS - Public
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+          Description: HTTPS public access
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+          Description: Allow all outbound traffic
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-sg'
+
+  # ============================================================
+  # IAM Role for EC2 (minimal permissions - SSM only)
+  # ============================================================
+  EC2InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore  # For SSM Session Manager access
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-ec2-role'
+
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref EC2InstanceRole
+
+  # ============================================================
+  # Elastic IP for static IP
+  # ============================================================
+  ElasticIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-eip'
+
+  # ============================================================
+  # EC2 Instance
+  # ============================================================
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      ImageId: !Ref ImageId
+      KeyName: !Ref KeyPairName
+      SecurityGroupIds:
+        - !Ref InstanceSecurityGroup
+      SubnetId: !Ref PublicSubnet
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 25  # GB - enough for OS + Docker + DB + uploads
+            VolumeType: gp3  # Cheaper and better performance than gp2
+            DeleteOnTermination: false  # Keep data on instance termination
+            Encrypted: true  # Encrypt EBS volume at rest
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+
+          echo "=== Starting nopCommerce setup ==="
+
+          # Update system
+          apt-get update -y
+          DEBIAN_FRONTEND=noninteractive apt-get upgrade -y
+
+          # Install Docker
+          apt-get install -y ca-certificates curl gnupg lsb-release
+          mkdir -p /etc/apt/keyrings
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+          chmod a+r /etc/apt/keyrings/docker.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+          apt-get update -y
+          apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+
+          # Add ubuntu user to docker group
+          usermod -aG docker ubuntu
+
+          # Enable Docker
+          systemctl enable docker
+          systemctl start docker
+
+          # Install Nginx
+          apt-get install -y nginx
+          systemctl enable nginx
+          systemctl start nginx
+
+          # Install Certbot for SSL
+          apt-get install -y certbot python3-certbot-nginx
+
+          # Install htop for monitoring
+          apt-get install -y htop
+
+          # Create swap space (important for t3.micro/t3.small)
+          fallocate -l 2G /swapfile
+          chmod 600 /swapfile
+          mkswap /swapfile
+          swapon /swapfile
+          echo '/swapfile none swap sw 0 0' | tee -a /etc/fstab
+
+          # Tune swappiness for better performance
+          sysctl vm.swappiness=10
+          echo 'vm.swappiness=10' | tee -a /etc/sysctl.conf
+
+          # Create application directory structure
+          mkdir -p /opt/nopcommerce
+          chown -R ubuntu:ubuntu /opt/nopcommerce
+
+          # Set up automatic security updates
+          apt-get install -y unattended-upgrades
+          dpkg-reconfigure -plow unattended-upgrades
+
+          # Configure UFW firewall
+          ufw default deny incoming
+          ufw default allow outgoing
+          ufw allow 22/tcp
+          ufw allow 80/tcp
+          ufw allow 443/tcp
+          ufw --force enable
+
+          echo "=== Setup completed ==="
+
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-server'
+
+  # ============================================================
+  # Associate Elastic IP with instance
+  # ============================================================
+  EIPAssociation:
+    Type: AWS::EC2::EIPAssociation
+    Properties:
+      InstanceId: !Ref EC2Instance
+      AllocationId: !GetAtt ElasticIP.AllocationId
+
+# ============================================================
+# Outputs
+# ============================================================
+Outputs:
+  VPCId:
+    Description: VPC ID
+    Value: !Ref VPC
+    Export:
+      Name: !Sub '${AWS::StackName}-vpc-id'
+
+  PublicSubnetId:
+    Description: Public Subnet ID
+    Value: !Ref PublicSubnet
+    Export:
+      Name: !Sub '${AWS::StackName}-public-subnet-id'
+
+  InstanceId:
+    Description: EC2 Instance ID
+    Value: !Ref EC2Instance
+
+  PublicIP:
+    Description: Elastic IP address (permanent)
+    Value: !Ref ElasticIP
+
+  SSHCommand:
+    Description: SSH command to connect
+    Value: !Sub 'ssh -i <your-key>.pem ubuntu@${ElasticIP}'
+
+  WebsiteURL:
+    Description: Website URL
+    Value: !Sub 'http://${ElasticIP}'

@@ -44,13 +44,22 @@ ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 # installs required packages
 RUN apk add tiff --no-cache --repository http://dl-3.alpinelinux.org/alpine/edge/main/ --allow-untrusted
 RUN apk add libgdiplus --no-cache --repository http://dl-3.alpinelinux.org/alpine/edge/community/ --allow-untrusted
-RUN apk add libc-dev tzdata gcompat --no-cache
+RUN apk add libc-dev tzdata gcompat curl --no-cache
+
+# Add non-root user for security (docker-expert best practice)
+RUN addgroup -g 1001 -S nopcommerce && \
+    adduser -S nopcommerce -u 1001 -G nopcommerce
 
 WORKDIR /app
 
-COPY --from=build /app/published .
+COPY --from=build --chown=nopcommerce:nopcommerce /app/published .
+
+USER nopcommerce
 
 ENV ASPNETCORE_URLS=http://+:80
 EXPOSE 80
-                            
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
+    CMD curl -sf http://localhost/health || exit 1
+
 ENTRYPOINT ["dotnet", "Nop.Web.dll"]

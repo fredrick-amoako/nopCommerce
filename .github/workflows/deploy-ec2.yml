@@ -1,0 +1,107 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:  # Allow manual trigger
+
+# Prevent concurrent deployments
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  # =========================================================================
+  # Build verification (runs tests before deploying)
+  # =========================================================================
+  build:
+    name: Build & Verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore src/NopCommerce.sln
+
+      - name: Build
+        run: dotnet build src/NopCommerce.sln -c Release --no-restore
+
+  # =========================================================================
+  # Deploy to EC2 (only after build succeeds)
+  # =========================================================================
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: production
+      url: https://${{ secrets.EC2_HOST }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+
+      - name: Add host to known_hosts
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H $EC2_HOST >> ~/.ssh/known_hosts
+
+      - name: Deploy to EC2
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+        run: |
+          echo "::group::Syncing files to EC2"
+          rsync -avz --delete \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude 'node_modules' \
+            --exclude '.vs' \
+            --exclude 'bin' \
+            --exclude 'obj' \
+            --exclude '*.user' \
+            --exclude '*.suo' \
+            --exclude 'backups' \
+            . ubuntu@$EC2_HOST:/opt/nopcommerce/
+          echo "::endgroup::"
+
+          echo "::group::Running deployment"
+          ssh ubuntu@$EC2_HOST '
+            cd /opt/nopcommerce
+
+            # Make scripts executable
+            chmod +x deploy/setup.sh deploy/deploy.sh deploy/backup.sh deploy/setup-ssl.sh
+
+            # Run deployment
+            ./deploy/deploy.sh
+          '
+          echo "::endgroup::"
+
+      - name: Verify deployment
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+        run: |
+          echo "Waiting 30s for application to stabilize..."
+          sleep 30
+
+          # Check if the site responds
+          HTTP_STATUS=$(curl -sk -o /dev/null -w "%{http_code}" "https://$EC2_HOST" || echo "000")
+          echo "HTTP Status: $HTTP_STATUS"
+
+          if [[ "$HTTP_STATUS" -ge 200 ]] && [[ "$HTTP_STATUS" -lt 400 ]]; then
+            echo "✓ Deployment verified - site is responding"
+          else
+            echo "⚠ Site returned HTTP $HTTP_STATUS (may need install wizard on first deploy)"
+          fi
