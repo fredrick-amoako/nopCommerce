@@ -13,7 +13,7 @@ services:
       # NOTE: nopCommerce does NOT use standard ASP.NET ConnectionStrings.
       # Database connection is configured via the install wizard on first boot
       # and stored in App_Data/appsettings.json (persisted via Docker volume).
-      - DOTNET_GCHeapHardLimit=500000000  # ~500MB heap limit
+      - DOTNET_GCHeapHardLimit=800000000  # ~800MB heap limit within 1GB container
     ports:
       - "127.0.0.1:5000:80"  # Bind only to localhost; Nginx will proxy to this
     depends_on:
@@ -26,8 +26,8 @@ services:
       - nopcommerce_logs:/app/logs
     networks:
       - nopcommerce_network
-    mem_limit: 700m
-    memswap_limit: 700m
+    mem_limit: 1g
+    memswap_limit: 1g
     healthcheck:
       # Uses the /health endpoint from HealthCheckStartup.cs
       test: ["CMD-SHELL", "wget -q --spider http://localhost/health || exit 1"]
@@ -37,28 +37,27 @@ services:
       start_period: 90s  # nopCommerce takes ~60-90s to start on first boot
 
   db:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+    image: postgres:15-alpine
     container_name: nopcommerce_db
     restart: unless-stopped
     environment:
-      - ACCEPT_EULA=Y
-      - SA_PASSWORD=${DB_PASSWORD}
-      - MSSQL_PID=Express
-      - MSSQL_MEMORY_LIMIT_MB=600
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=nopcommerce
     volumes:
-      - mssql_data:/var/opt/mssql
-    # NOTE: Do NOT expose port 1433 to the host in production.
-    # SQL Server is only reachable within the Docker network.
+      - postgres_data:/var/lib/postgresql/data
+    # NOTE: Do NOT expose port 5432 to the host in production.
+    # PostgreSQL is only reachable within the Docker network.
     networks:
       - nopcommerce_network
-    mem_limit: 800m
-    memswap_limit: 800m
+    mem_limit: 400m
+    memswap_limit: 400m
     healthcheck:
-      test: ["CMD-SHELL", "grep -q 'ready for client connections' /var/opt/mssql/log/errorlog || exit 1"]
-      interval: 15s
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}", "-d", "nopcommerce"]
+      interval: 10s
       timeout: 5s
-      retries: 10
-      start_period: 45s
+      retries: 5
+      start_period: 10s
 
 volumes:
   nopcommerce_app_data:
@@ -69,8 +68,8 @@ volumes:
     name: nopcommerce_images
   nopcommerce_logs:
     name: nopcommerce_logs
-  mssql_data:
-    name: nopcommerce_mssql_data
+  postgres_data:
+    name: nopcommerce_postgres_data
 
 networks:
   nopcommerce_network:

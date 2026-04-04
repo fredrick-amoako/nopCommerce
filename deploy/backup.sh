@@ -30,25 +30,18 @@ log "=== Starting Backup: ${DATE} ==="
 # -----------------------------------------------------------------------------
 log "Backing up database..."
 
-# Create backup directory inside container
-docker exec nopcommerce_db mkdir -p /var/opt/mssql/backup 2>/dev/null || true
+# PostgreSQL backup using pg_dump
+if docker exec nopcommerce_db pg_dump -U "${POSTGRES_USER:-nopcommerce}" -d nopcommerce -F c -f "/tmp/nopCommerce_${DATE}.dump" 2>/dev/null; then
+    log "✓ Database backup created (pg_dump custom format)"
 
-# Try native SQL backup first (preferred)
-if docker exec nopcommerce_db /opt/mssql-tools18/bin/sqlcmd \
-    -S localhost -U sa -P "${DB_PASSWORD}" \
-    -Q "BACKUP DATABASE [nopCommerce] TO DISK = N'/var/opt/mssql/backup/nopCommerce_${DATE}.bak'" \
-    -C -b 2>/dev/null; then
-    log "✓ Database backup created (native SQL backup with compression)"
+    # Copy the .dump file out of the container
+    docker cp "nopcommerce_db:/tmp/nopCommerce_${DATE}.dump" \
+        "${BACKUP_DIR}/nopCommerce_${DATE}.dump" 2>/dev/null || true
 
-    # Copy the .bak file out of the container
-    docker cp nopcommerce_db:/var/opt/mssql/backup/nopCommerce_${DATE}.bak \
-        "${BACKUP_DIR}/nopCommerce_${DATE}.bak" 2>/dev/null || true
-
-    # Clean up inside container (keep only last 3)
-    docker exec nopcommerce_db bash -c \
-        'ls -t /var/opt/mssql/backup/*.bak 2>/dev/null | tail -n +4 | xargs rm -f 2>/dev/null' || true
+    # Clean up inside container
+    docker exec nopcommerce_db rm -f "/tmp/nopCommerce_${DATE}.dump" || true
 else
-    log "⚠ Native SQL backup failed (sqlcmd not available). Will use volume backup."
+    log "⚠ Native PostgreSQL backup failed. Will use volume backup."
 fi
 
 # -----------------------------------------------------------------------------
@@ -61,7 +54,7 @@ docker run --rm \
     -v nopcommerce_plugins:/data/plugins:ro \
     -v nopcommerce_images:/data/images:ro \
     -v nopcommerce_logs:/data/logs:ro \
-    -v nopcommerce_mssql_data:/data/mssql:ro \
+    -v nopcommerce_postgres_data:/data/postgres:ro \
     -v "${BACKUP_DIR}:/backup" \
     alpine tar -czf "/backup/nopcommerce_volumes_${DATE}.tar.gz" -C /data .
 
@@ -78,9 +71,9 @@ if [[ -n "${S3_BUCKET}" ]]; then
         aws s3 cp "${BACKUP_DIR}/nopcommerce_volumes_${DATE}.tar.gz" \
             "s3://${S3_BUCKET}/backups/" --quiet
 
-        # Upload .bak file too if it exists
-        if [[ -f "${BACKUP_DIR}/nopCommerce_${DATE}.bak" ]]; then
-            aws s3 cp "${BACKUP_DIR}/nopCommerce_${DATE}.bak" \
+        # Upload .dump file too if it exists
+        if [[ -f "${BACKUP_DIR}/nopCommerce_${DATE}.dump" ]]; then
+            aws s3 cp "${BACKUP_DIR}/nopCommerce_${DATE}.dump" \
                 "s3://${S3_BUCKET}/backups/" --quiet
         fi
 
@@ -95,9 +88,9 @@ fi
 # -----------------------------------------------------------------------------
 # 4. Clean up old local backups
 # -----------------------------------------------------------------------------
-deleted=$(find "${BACKUP_DIR}" -name "*.tar.gz" -o -name "*.bak" -mtime +${RETENTION_DAYS} | wc -l)
+deleted=$(find "${BACKUP_DIR}" -name "*.tar.gz" -o -name "*.dump" -mtime +${RETENTION_DAYS} | wc -l)
 find "${BACKUP_DIR}" -name "*.tar.gz" -mtime +${RETENTION_DAYS} -delete
-find "${BACKUP_DIR}" -name "*.bak" -mtime +${RETENTION_DAYS} -delete
+find "${BACKUP_DIR}" -name "*.dump" -mtime +${RETENTION_DAYS} -delete
 
 if [[ "${deleted}" -gt 0 ]]; then
     log "Cleaned up ${deleted} backup(s) older than ${RETENTION_DAYS} days"
@@ -107,7 +100,7 @@ fi
 # Summary
 # -----------------------------------------------------------------------------
 total_size=$(du -sh "${BACKUP_DIR}" | cut -f1)
-backup_count=$(find "${BACKUP_DIR}" -name "*.tar.gz" -o -name "*.bak" | wc -l)
+backup_count=$(find "${BACKUP_DIR}" -name "*.tar.gz" -o -name "*.dump" | wc -l)
 
 log "=== Backup complete ==="
 log "  Location: ${BACKUP_DIR}"
