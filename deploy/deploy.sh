@@ -25,8 +25,8 @@ command -v docker >/dev/null 2>&1 || die "Docker not installed"
 
 # Validate .env has a real password
 source "${PROJECT_DIR}/.env"
-if [[ "${DB_PASSWORD:-}" == "ChangeMe!Strong123" ]] || [[ -z "${DB_PASSWORD:-}" ]]; then
-    die "Change the DB_PASSWORD in .env before deploying! Current password is the default."
+if [[ "${POSTGRES_PASSWORD:-}" == "ChangeMe!Strong123" ]] || [[ -z "${POSTGRES_PASSWORD:-}" ]]; then
+    die "Change the POSTGRES_PASSWORD in .env before deploying! Current password is the default or empty."
 fi
 
 # -----------------------------------------------------------------------------
@@ -97,10 +97,11 @@ if [[ "$app_status" == "running" ]]; then
     log ""
     log "If this is a fresh install, complete the nopCommerce install wizard:"
     log "  1. Open https://${PUBLIC_IP} in your browser"
-    log "  2. Select 'Microsoft SQL Server'"
-    log "  3. Connection string:"
-    log "     Server=nopcommerce_db;Database=nopCommerce;User Id=sa;Password=${DB_PASSWORD};TrustServerCertificate=True;Encrypt=False"
-    log "  4. Click Install"
+    log "  2. Select 'PostgreSQL'"
+    log "  3. Server Name: nopcommerce_db"
+    log "  4. Database / Username: nopcommerce"
+    log "  5. Password: ${POSTGRES_PASSWORD}"
+    log "  6. Click Install"
 else
     log "✗ Deployment may have issues. Container status: ${app_status}"
     log ""
