@@ -249,7 +249,7 @@ Prevents CPU throttling during traffic spikes:
 
 ```powershell
 # Run this on your LOCAL PowerShell (not SSH)
-$InstanceId = "i-036e8ee82ece726dd" 
+$InstanceId = "i-036e8ee82ece726dd"
 aws ec2 modify-instance-credit-specification `
   --instance-credit-specification "InstanceId=$InstanceId,CpuCredits=unlimited" `
   --region us-east-1
@@ -264,7 +264,19 @@ Go to your GitHub repository → **Settings** → **Secrets and variables** → 
 | `EC2_HOST`    | Your new Elastic IP                      |
 | `EC2_SSH_KEY` | Entire contents of `nopcommerce-key.pem` |
 
-Now every push to `main` will automatically deploy to the new server.
+| `EC2_SSH_KEY` | Entire contents of `nopcommerce-key.pem` |
+
+### How to Trigger the Deployment
+
+By default, the workflow only runs automatically on pushes to the `main` branch.
+
+**To deploy from your current branch:**
+
+1.  **Manual Start**: Go to the **Actions** tab in GitHub, click **"Deploy to EC2"**, click the **"Run workflow"** dropdown, select your branch, and click the green button.
+2.  **Automatic Start (Change Code)**: If you want it to always deploy from your current branch, open `.github/workflows/deploy-ec2.yml` and change line 5 to:
+    `branches: [main, your-branch-name]`
+
+Now every push to your branch will automatically deploy to the new server.
 
 ---
 

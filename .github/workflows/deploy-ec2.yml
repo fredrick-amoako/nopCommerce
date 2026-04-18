@@ -41,7 +41,6 @@ jobs:
     needs: build
     environment:
       name: production
-      url: https://${{ secrets.EC2_HOST }}
 
     steps:
       - name: Checkout
