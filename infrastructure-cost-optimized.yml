@@ -32,9 +32,6 @@ Conditions:
   HasAlertEmail: !Not [!Equals [!Ref AlertEmail, ""]]
 
 Resources:
-  # ============================================================
-  # VPC Resources (minimal - single public subnet)
-  # ============================================================
   VPC:
     Type: AWS::EC2::VPC
     Properties:
@@ -91,9 +88,6 @@ Resources:
       SubnetId: !Ref PublicSubnet
       RouteTableId: !Ref RouteTable
 
-  # ============================================================
-  # Security Group - Restricted Access
-  # ============================================================
   InstanceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -126,9 +120,6 @@ Resources:
         - Key: Name
           Value: !Sub '${AWS::StackName}-sg'
 
-  # ============================================================
-  # IAM Role for EC2 (minimal permissions - SSM only)
-  # ============================================================
   EC2InstanceRole:
     Type: AWS::IAM::Role
     Properties:
@@ -140,8 +131,8 @@ Resources:
               Service: ec2.amazonaws.com
             Action: sts:AssumeRole
       ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore  # For SSM Session Manager access
-        - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy   # For CloudWatch monitoring and logs
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore 
+        - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy  
       Tags:
         - Key: Name
           Value: !Sub '${AWS::StackName}-ec2-role'
@@ -152,9 +143,6 @@ Resources:
       Roles:
         - !Ref EC2InstanceRole
 
-  # ============================================================
-  # Elastic IP for static IP
-  # ============================================================
   ElasticIP:
     Type: AWS::EC2::EIP
     Properties:
@@ -163,9 +151,6 @@ Resources:
         - Key: Name
           Value: !Sub '${AWS::StackName}-eip'
 
-  # ============================================================
-  # EC2 Instance
-  # ============================================================
   EC2Instance:
     Type: AWS::EC2::Instance
     Properties:
@@ -179,10 +164,10 @@ Resources:
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
-            VolumeSize: 25  # GB - enough for OS + Docker + DB + uploads
-            VolumeType: gp3  # Cheaper and better performance than gp2
-            DeleteOnTermination: false  # Keep data on instance termination
-            Encrypted: true  # Encrypt EBS volume at rest
+            VolumeSize: 25 
+            VolumeType: gp3
+            DeleteOnTermination: false 
+            Encrypted: true 
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash -xe
@@ -254,18 +239,12 @@ Resources:
         - Key: Name
           Value: !Sub '${AWS::StackName}-server'
 
-  # ============================================================
-  # Associate Elastic IP with instance
-  # ============================================================
   EIPAssociation:
     Type: AWS::EC2::EIPAssociation
     Properties:
       InstanceId: !Ref EC2Instance
       AllocationId: !GetAtt ElasticIP.AllocationId
 
-  # ============================================================
-  # Monitoring - SNS Topic and CloudWatch Alarms
-  # ============================================================
   NopCommerceAlertTopic:
     Type: AWS::SNS::Topic
     Condition: HasAlertEmail
@@ -338,9 +317,6 @@ Resources:
       AlarmActions:
         - !Ref NopCommerceAlertTopic
 
-# ============================================================
-# Outputs
-# ============================================================
 Outputs:
   VPCId:
     Description: VPC ID

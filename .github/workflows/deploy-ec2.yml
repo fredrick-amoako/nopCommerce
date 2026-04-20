@@ -3,17 +3,13 @@ name: Deploy to EC2
 on:
   push:
     branches: [main, develop]
-  workflow_dispatch:  # Allow manual trigger
+  workflow_dispatch:
 
-# Prevent concurrent deployments
 concurrency:
   group: deploy-production
   cancel-in-progress: false
 
 jobs:
-  # =========================================================================
-  # Build verification (runs tests before deploying)
-  # =========================================================================
   build:
     name: Build & Verify
     runs-on: ubuntu-latest
@@ -32,9 +28,6 @@ jobs:
       - name: Build
         run: dotnet build src/NopCommerce.sln -c Release --no-restore
 
-  # =========================================================================
-  # Deploy to EC2 (only after build succeeds)
-  # =========================================================================
   deploy:
     name: Deploy to EC2
     runs-on: ubuntu-latest
