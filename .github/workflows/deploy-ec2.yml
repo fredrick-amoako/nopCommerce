@@ -66,6 +66,7 @@ jobs:
             --exclude '*.user' \
             --exclude '*.suo' \
             --exclude 'backups' \
+            --exclude '.env' \
             . ubuntu@$EC2_HOST:/opt/nopcommerce/
           echo "::endgroup::"
 
