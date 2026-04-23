@@ -13,7 +13,7 @@ services:
       # NOTE: nopCommerce does NOT use standard ASP.NET ConnectionStrings.
       # Database connection is configured via the install wizard on first boot
       # and stored in App_Data/appsettings.json (persisted via Docker volume).
-      - DOTNET_GCHeapHardLimit=800000000  # ~800MB heap limit within 1GB container
+      - DOTNET_GCHeapHardLimit=1000000000  # ~1GB heap limit within 1200MB container
     ports:
       - "127.0.0.1:5000:80"  # Bind only to localhost; Nginx will proxy to this
     depends_on:
@@ -26,8 +26,8 @@ services:
       - nopcommerce_logs:/app/logs
     networks:
       - nopcommerce_network
-    mem_limit: 1g
-    memswap_limit: 1g
+    mem_limit: 1200m
+    memswap_limit: 1200m
     healthcheck:
       # Uses the /health endpoint from HealthCheckStartup.cs
       test: ["CMD-SHELL", "wget -q --spider http://localhost/health || exit 1"]
