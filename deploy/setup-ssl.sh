@@ -140,6 +140,10 @@ server {
 
     location ~* \.(jpg|jpeg|png|gif|ico|css|js|svg|woff|woff2|ttf|eot)$ {
         proxy_pass http://nopcommerce;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
         expires 30d;
         add_header Cache-Control "public, immutable";
         add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;

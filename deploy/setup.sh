@@ -136,6 +136,10 @@ server {
     # Static file caching
     location ~* \.(jpg|jpeg|png|gif|ico|css|js|svg|woff|woff2|ttf|eot)$ {
         proxy_pass http://nopcommerce;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
         expires 30d;
         add_header Cache-Control "public, immutable";
         # Re-declare security headers (Nginx doesn't inherit add_header into nested blocks)
