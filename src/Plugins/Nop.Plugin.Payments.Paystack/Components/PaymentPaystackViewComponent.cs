@@ -3,9 +3,11 @@ using Nop.Core;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Http.Extensions;
 using Nop.Plugin.Payments.Paystack.Models;
+using Nop.Services.Catalog;
 using Nop.Services.Common;
 using Nop.Services.Configuration;
 using Nop.Services.Customers;
+using Nop.Services.Directory;
 using Nop.Services.Localization;
 using Nop.Services.Orders;
 using Nop.Web.Framework.Components;
@@ -22,6 +24,8 @@ public class PaymentPaystackViewComponent : NopViewComponent
     private readonly IOrderTotalCalculationService _orderTotalCalculationService;
     private readonly IAddressService _addressService;
     private readonly ICustomerService _customerService;
+    private readonly IPriceFormatter _priceFormatter;
+    private readonly ICurrencyService _currencyService;
 
     public PaymentPaystackViewComponent(
         IWorkContext workContext,
@@ -31,7 +35,9 @@ public class PaymentPaystackViewComponent : NopViewComponent
         IShoppingCartService shoppingCartService,
         IOrderTotalCalculationService orderTotalCalculationService,
         IAddressService addressService,
-        ICustomerService customerService)
+        ICustomerService customerService,
+        IPriceFormatter priceFormatter,
+        ICurrencyService currencyService)
     {
         _workContext = workContext;
         _storeContext = storeContext;
@@ -41,6 +47,8 @@ public class PaymentPaystackViewComponent : NopViewComponent
         _orderTotalCalculationService = orderTotalCalculationService;
         _addressService = addressService;
         _customerService = customerService;
+        _priceFormatter = priceFormatter;
+        _currencyService = currencyService;
     }
 
     public async Task<IViewComponentResult> InvokeAsync()
@@ -71,7 +79,11 @@ public class PaymentPaystackViewComponent : NopViewComponent
         if (cart.Any())
         {
             var (total, _, _, _, _, _) = await _orderTotalCalculationService.GetShoppingCartTotalAsync(cart);
-            model.OrderTotal = total?.ToString("C") ?? "N/A";
+            if (total.HasValue)
+            {
+                var workingCurrency = await _workContext.GetWorkingCurrencyAsync();
+                model.OrderTotal = await _priceFormatter.FormatPriceAsync(total.Value, true, workingCurrency);
+            }
         }
 
         if (Request.IsGetRequest())
