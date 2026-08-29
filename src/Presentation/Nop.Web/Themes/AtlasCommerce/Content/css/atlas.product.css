@@ -1,0 +1,63 @@
+/* Atlas Commerce — product details page polish.
+   Loaded after DefaultClean's styles.css and atlas.css.
+*/
+
+/* Reviews */
+.atlas-product-page .product-review-item {
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--atlas-border);
+}
+.atlas-product-page .product-review-item:last-child { border-bottom: 0; }
+
+/* Specifications table */
+.atlas-product-page .specs-table,
+.atlas-product-page table.specs-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.atlas-product-page .specs-table th,
+.atlas-product-page .specs-table td {
+  text-align: left;
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid var(--atlas-border);
+}
+.atlas-product-page .specs-table th {
+  font-weight: 600;
+  color: var(--atlas-ink);
+  background: var(--atlas-surface-alt);
+  width: 32%;
+}
+
+/* Minimum qty notification — Walmart-style banner */
+.atlas-product-page .min-qty-notification {
+  background: #fff8e1;
+  border: 1px solid #f5d273;
+  border-radius: var(--atlas-radius);
+  color: #6b4e00;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.95rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Pre-order */
+.atlas-product-page .pre-order-availability-date {
+  font-size: 0.9rem;
+  color: var(--atlas-ink-soft);
+  margin-top: 0.5rem;
+}
+
+/* "Pickup" availability styling — lean on DefaultClean's .availability but
+   emulate Walmart's greener stock indicator. */
+.atlas-product-page .availability .stock {
+  background: var(--atlas-success);
+}
+
+/* Reviews row inside overview */
+.atlas-product-overview .product-review-overview .rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.atlas-product-overview .product-review-overview .rating div {
+  font-size: 0.95rem;
+}
