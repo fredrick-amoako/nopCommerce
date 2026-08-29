@@ -1,0 +1,47 @@
+@using Nop.Core.Domain.Catalog
+@using Nop.Services.Themes
+
+@inject CatalogSettings catalogSettings
+@inject IThemeContext themeContext
+
+@{
+    Layout = "";
+    var themeName = await themeContext.GetWorkingThemeNameAsync();
+    var supportRtl = await Html.ShouldUseRtlThemeAsync();
+
+    // IMPORTANT — bundle ordering: NopHtml.AppendCssFileParts/AppendScriptParts
+    // INSERT AT POSITION 0, so the FINAL bundle order is the REVERSE of the
+    // call order (the last call ends up LAST in the bundle = highest cascade
+    // priority). This matches DefaultClean's own convention (it calls its main
+    // stylesheet first so it lands after the library CSS).
+    //
+    // Desired final CSS order (low → high priority):
+    //   1. DefaultClean styles.css   (baseline layout/reset)
+    //   2. DefaultClean print.css
+    //   3. atlas.css                 (Atlas storefront overrides)
+    //   4. atlas.rtl.css            (RTL adjustments, when applicable)
+    //   5. atlas.product.css        (PDP layout, highest priority)
+    // …so we call them in REVERSE order below.
+    NopHtml.AppendCssFileParts($"~/Themes/{themeName}/Content/css/atlas.product.css");
+    if (supportRtl)
+    {
+        NopHtml.AppendCssFileParts($"~/Themes/{themeName}/Content/css/atlas.rtl.css");
+    }
+    NopHtml.AppendCssFileParts($"~/Themes/{themeName}/Content/css/atlas.css");
+    NopHtml.AppendCssFileParts("~/Themes/DefaultClean/Content/css/print.css");
+    NopHtml.AppendCssFileParts($"~/Themes/DefaultClean/Content/css/styles{(supportRtl ? ".rtl" : "")}.css");
+
+    // Swiper is no longer used — the custom atlas.gallery.js implements its own
+    // track-based slider and product cards use the built-in [data-atlas-carousel]
+    // engine (atlas.js). jQuery UI is still useful for the price-range slider on
+    // category pages.
+    NopHtml.AppendCssFileParts("~/lib_npm/jquery-ui-dist/jquery-ui.min.css");
+
+    // Atlas helpers: Buy Now (PDP + product cards), card carousels, sticky price.
+    // Loaded on every public page so catalog-page features work too.
+    // NOTE: use AddScriptParts (append to END of the list) — NOT AppendScriptParts
+    // (which inserts at position 0). This guarantees atlas.js is bundled AFTER
+    // jQuery and public.ajaxcart.js, so it can reference them directly. The
+    // defensive retry inside atlas.js remains as a safety net for edge cases.
+    NopHtml.AddScriptParts(ResourceLocation.Footer, $"~/Themes/{themeName}/Content/js/atlas.js");
+}

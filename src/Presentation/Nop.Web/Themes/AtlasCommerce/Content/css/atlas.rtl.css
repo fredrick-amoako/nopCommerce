@@ -1,0 +1,29 @@
+/* Atlas Commerce — RTL mirror. Flips directional placements, paddings,
+   and gallery chrome for right-to-left languages. Loaded conditionally
+   by Head.cshtml when ShouldUseRtlThemeAsync() is true.
+*/
+
+html[dir="rtl"] .atlas-product-grid {
+  direction: rtl;
+}
+
+html[dir="rtl"] .atlas-gallery {
+  direction: rtl;
+}
+
+@media (min-width: 992px) {
+  html[dir="rtl"] .atlas-gallery {
+    grid-template-columns: minmax(0, 1fr) 88px;
+    grid-template-areas: "main thumbs";
+  }
+}
+
+html[dir="rtl"] .atlas-gallery-prev { left: auto; right: 12px; }
+html[dir="rtl"] .atlas-gallery-next { right: auto; left: 12px; }
+
+html[dir="rtl"] .atlas-gallery-prev::before { transform: rotate(45deg); margin-left: 0; margin-right: 4px; }
+html[dir="rtl"] .atlas-gallery-next::before { transform: rotate(-135deg); margin-right: 0; margin-left: 4px; }
+
+html[dir="rtl"] .atlas-sticky-atc-actions {
+  direction: rtl;
+}

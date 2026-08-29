@@ -1,0 +1,1818 @@
+/* Atlas Commerce — primary stylesheet.
+   Built ON TOP of DefaultClean's baseline (styles.css), which Head.cshtml
+   loads first. This file only adds Atlas-specific tokens and overrides.
+*/
+
+/* ============================================================
+   1. Design tokens (swap values to retheme)
+   ============================================================ */
+:root {
+  /* Walmart-tier brand */
+  --atlas-primary: #0071ce;
+  --atlas-primary-strong: #004f9e;
+  --atlas-primary-soft: #e6f1fb;
+  --atlas-link: #0071ce;
+
+  --atlas-accent: #ffc220;       /* signature yellow */
+  --atlas-accent-strong: #f0a800;
+
+  --atlas-success: #007f3a;
+  --atlas-ink: #1f2933;
+  --atlas-ink-soft: #54616d;
+  --atlas-ink-mute: #8a96a3;
+
+  --atlas-surface: #ffffff;
+  --atlas-surface-alt: #f6f7f8;
+  --atlas-border: #e6e9ec;
+  --atlas-border-strong: #c8cfd6;
+
+  --atlas-radius-sm: 6px;
+  --atlas-radius: 10px;
+  --atlas-radius-lg: 16px;
+
+  --atlas-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --atlas-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+  --atlas-shadow-lg: 0 18px 48px rgba(15, 23, 42, 0.12);
+
+  --atlas-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+                'Helvetica Neue', Arial, sans-serif;
+}
+
+/* ============================================================
+   2. Top-level color & typography overrides on the existing
+      DefaultClean selectors, so we don't fork markup.
+   ============================================================ */
+body {
+  font-family: var(--atlas-font) !important;
+  color: var(--atlas-ink);
+  background: var(--atlas-surface-alt);
+}
+
+a,
+a:active,
+a:visited {
+  color: var(--atlas-link);
+  text-decoration: none;
+}
+a:hover { text-decoration: underline; }
+
+/* ============================================================
+   2a. Header chrome — Walmart-style blue band.
+       Reinforces DefaultClean's selectors so the layout
+       (header-upper, header-links, header-lower, menu) holds
+       even if the baseline stylesheet is partially shadowed.
+   ============================================================ */
+/* Full-bleed masthead: the blue band spans the whole viewport and the rows
+   inside carry the alignment. The menu bar below is an intentional darker
+   shade (nav-bar pattern) — see .header-menu rules further down. */
+.header {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  text-align: center;
+  background: linear-gradient(180deg, #00316a 0%, #00498d 100%);
+  color: #ffffff;
+  padding: 0;
+}
+.header-upper,
+.header-lower {
+  width: 100%;
+  max-width: min(1600px, 94vw);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  box-sizing: border-box;
+}
+
+/* Wider canvas on big screens — DefaultClean locks the column to 1200px at
+   >=1367px, which makes the store feel narrow. Match its media query so we
+   only win there and keep the baseline responsive rules below it. Fluid up
+   to 1600px (never wider than the viewport, so centering never breaks). */
+@media all and (min-width: 1367px) {
+  .master-wrapper-content { width: min(1600px, 94vw); }
+  .footer-upper,
+  .footer-lower { width: min(1600px, 94vw); }
+}
+.header *,
+.header a {
+  color: #ffffff;
+}
+.header a:hover { color: var(--atlas-accent); text-decoration: none; }
+
+/* Category menu — keep the horizontal bar white-on-navy, but force the
+   dropdown flyout panels (white background) back to dark text. The blanket
+   ".header * { color:#fff }" above otherwise makes them invisible. */
+.header-menu {
+  width: 100%;
+  max-width: none;
+}
+/* Align the menu row with the header rows above it */
+.header-menu .menu-container {
+  max-width: min(1600px, 94vw);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  box-sizing: border-box;
+}
+.header-menu .menu__list-view,
+.header-menu .menu__grid-view {
+  background: #ffffff;
+  box-shadow: var(--atlas-shadow);
+  border-radius: 0 0 var(--atlas-radius-sm) var(--atlas-radius-sm);
+}
+.header-menu .menu__list-view a,
+.header-menu .menu__list-view .menu__link,
+.header-menu .menu__grid-view a,
+.header-menu .menu__grid-view .menu__link {
+  color: var(--atlas-ink);
+}
+.header-menu .menu__list-view a:hover,
+.header-menu .menu__list-view .menu__link:hover,
+.header-menu .menu__grid-view a:hover,
+.header-menu .menu__grid-view .menu__link:hover {
+  color: var(--atlas-primary);
+  background: var(--atlas-primary-soft);
+}
+
+/* White dropdown panels inside the blue header (mini-cart flyout, search
+   autocomplete) also need dark text — they inherit the blanket #fff above. */
+.flyout-cart,
+.mini-shopping-cart,
+.header .ui-autocomplete {
+  color: var(--atlas-ink);
+}
+.flyout-cart a,
+.mini-shopping-cart a,
+.header .ui-autocomplete a {
+  color: var(--atlas-link);
+}
+
+/* Top row: selectors + header links */
+.header-upper {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+.header-selectors-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0;
+  border-bottom: 0;
+}
+.header-selectors-wrapper > div {
+  display: inline-block;
+  width: auto;
+  margin: 0;
+}
+.header-selectors-wrapper select {
+  width: auto;
+  min-width: 140px;
+  height: 32px;
+  border-radius: var(--atlas-radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  padding: 0 0.5rem;
+}
+
+.header-links-wrapper {
+  padding: 0;
+  margin-left: auto; /* pin the account links to the right edge */
+}
+.header-links ul {
+  font-size: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  text-align: right;
+}
+/* DefaultClean gives the cart link a light-gray box (#topcartlink) — it
+   looks broken inside the blue band. Make it a plain link like its siblings. */
+#topcartlink {
+  display: inline-block;
+  width: auto;
+  max-width: none;
+  margin: 0;
+  background: transparent;
+  padding: 0;
+}
+.header-links li {
+  display: inline-block;
+  margin: 0 0 0 1rem;
+}
+.header-links li:first-child { margin-left: 0; }
+.header-links span,
+.header-links a {
+  display: inline-block;
+  font-size: 0.85rem;
+  line-height: 32px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 500;
+}
+
+/* Middle row: logo + search */
+.header-lower {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  flex-wrap: wrap;
+}
+.header-logo {
+  margin: 0;
+  text-align: left;
+  flex: 0 0 auto;
+}
+.header-logo a {
+  display: inline-flex;
+  align-items: center;
+  line-height: 0;
+}
+.header-logo a img {
+  max-height: 56px;
+  max-width: 220px;
+  width: auto;
+  opacity: 1;
+}
+
+.search-box {
+  flex: 1 1 320px;
+  max-width: 560px;
+}
+.search-box form {
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: stretch;
+  gap: 0;
+}
+.search-box input.search-box-text {
+  flex: 1 1 auto;
+  width: auto;
+  height: 44px;
+  margin: 0;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: var(--atlas-radius-sm) 0 0 var(--atlas-radius-sm);
+  padding: 0 0.75rem;
+  background: #fff;
+  color: var(--atlas-ink);
+  font-size: 1rem;
+}
+.search-box .search-box-category {
+  height: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-left: 0;
+  background: #fff;
+  color: var(--atlas-ink);
+  padding: 0 0.5rem;
+}
+.search-box .search-box-button {
+  min-width: 110px;
+  height: 44px;
+  border: 0;
+  border-radius: 0 var(--atlas-radius-sm) var(--atlas-radius-sm) 0;
+  background: var(--atlas-accent);
+  color: var(--atlas-ink);
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  text-transform: uppercase;
+  padding: 0 1.25rem;
+  letter-spacing: 0.04em;
+}
+.search-box .search-box-button:hover { background: var(--atlas-accent-strong); }
+.search-box .search-box-button:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: -3px;
+}
+
+/* Cart hover flyout — opaque white panel (DefaultClean positions it, we own
+   the surface). The old semi-transparent "chip" styling was unreadable over
+   the blue band. */
+#flyout-cart {
+  background: #ffffff;
+  padding: 0.75rem 1rem;
+  border-radius: var(--atlas-radius-sm);
+  box-shadow: var(--atlas-shadow);
+}
+#flyout-cart a { color: var(--atlas-link); }
+.mini-cart-count .cart-qty {
+  background: var(--atlas-accent);
+  color: var(--atlas-ink);
+  border-radius: 999px;
+  padding: 0.1rem 0.45rem;
+  font-weight: 700;
+}
+
+/* Main menu row */
+.header-menu {
+  background: #002952;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 0;
+  margin: 0;
+  min-height: 0;
+}
+.header-menu:empty { display: none; }
+.header-menu,
+.header-menu a {
+  color: #ffffff;
+}
+.header-menu a:hover { color: var(--atlas-accent); }
+
+/* Force the main menu to lay out horizontally on desktop so vertical
+   bullets never appear, regardless of whether DefaultClean's
+   mobile/desktop media queries are applied. */
+@media (min-width: 1001px) {
+  .menu {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .menu > .menu__item {
+    display: inline-block;
+    width: auto;
+    padding: 0.85rem 1.1rem;
+    background: transparent;
+    color: #fff;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .menu > .menu__item:last-child { border-right: 0; }
+  .menu > .menu__item:hover,
+  .menu > .menu__item:focus-within { background: rgba(255, 255, 255, 0.08); }
+  .menu__item-toggle {
+    display: inline-block;
+    background: transparent;
+    border: 0;
+    color: #fff;
+    cursor: pointer;
+    padding: 0;
+    font: inherit;
+    line-height: 1.2;
+  }
+  .menu__item-toggle::after { display: none; }
+  .menu-dropdown { display: inline-block; }
+}
+@media (max-width: 1000px) {
+  .menu {
+    display: block;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .menu > .menu__item {
+    display: block;
+    width: 100%;
+    padding: 0;
+    background: transparent;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .menu__item-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    background: transparent;
+    border: 0;
+    color: #fff;
+    padding: 1rem 1.25rem;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .header-upper { gap: 0.5rem; }
+  .header-links li { margin: 0 0 0 0.75rem; }
+  .header-lower { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+  .header-logo a img { max-height: 44px; }
+  .search-box input.search-box-text,
+  .search-box .search-box-category,
+  .search-box .search-box-button { height: 40px; }
+}
+
+/* Breadcrumb — slim walmart-style */
+.breadcrumb {
+  background: transparent;
+  border-bottom: 1px solid var(--atlas-border);
+  font-size: 0.85rem;
+  padding: 0.75rem 0;
+  margin: 0 0 1rem;
+  color: var(--atlas-ink-soft);
+}
+.breadcrumb a { color: var(--atlas-ink-soft); }
+.breadcrumb a:hover { color: var(--atlas-primary); }
+.breadcrumb .delimiter { color: var(--atlas-ink-mute); }
+
+/* Headings — Walmart-tier typography */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--atlas-font);
+  color: var(--atlas-ink);
+  font-weight: 700;
+  line-height: 1.25;
+}
+.page h1 {
+  margin: 0 0 1rem;
+  font-size: 1.75rem;
+  letter-spacing: -0.01em;
+}
+.page h2,
+.topic-block-title h2 {
+  margin: 0 0 1rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--atlas-ink);
+  letter-spacing: -0.005em;
+}
+.topic-block { margin: 0 0 2rem; }
+.topic-block .topic-block-title { margin: 0 0 1rem; }
+.topic-block-body p {
+  margin: 0 0 0.85rem;
+  color: var(--atlas-ink);
+  font-size: 1rem;
+  line-height: 1.55;
+}
+.topic-block-body a { color: var(--atlas-link); }
+
+/* Page chrome — white card on the gray canvas (PDP, category, search…). */
+.page {
+  background: var(--atlas-surface);
+  border-radius: var(--atlas-radius);
+  box-shadow: var(--atlas-shadow-sm);
+  padding: 1.5rem;
+}
+/* Home: the full-bleed hero must not be trapped inside the card — flatten
+   the wrapper so the banner sits edge-to-edge and the sections below rest
+   directly on the canvas (product cards carry their own white surface). */
+.page.home-page {
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+}
+/* …and close the canvas strip between header and hero so the banner reads
+   as a continuation of the page, not a layer floating in front of it. */
+.master-wrapper-content:has(.nop-slider) .master-column-wrapper {
+  padding-top: 0;
+}
+/* …while keeping breathing room below the hero for the first section
+   (specificity must beat .home-page .topic-block's margin shorthand). */
+.home-page .nop-slider + * { margin-top: 2rem; }
+.page-body { margin-bottom: 2rem; }
+
+.master-column-wrapper { padding-top: 1rem; }
+
+/* ============================================================
+   2b. Storefront product grid (home, category, search).
+       Walmart-style clean cards.
+   ============================================================ */
+.item-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+/* Neutralize DefaultClean's float-based column layout (width:24%/32%/49% +
+   float:left) so cards fill the grid tracks instead of collapsing to ~70px. */
+.item-grid > .item-box,
+.item-grid > .product-item {
+  width: auto;
+  float: none;
+  margin: 0;
+}
+/* DefaultClean's page-scoped rules (.product-details-page /
+   .shopping-cart-page .product-grid .item-box{width:24%}) out-specificity
+   the reset above and collapse "also bought" cards to ~75px. Match their
+   specificity — we load last, so we win. */
+.product-details-page .product-grid .item-box,
+.shopping-cart-page .product-grid .item-box {
+  width: auto;
+}
+.item-box,
+.product-item {
+  display: flex;
+  flex-direction: column;
+  background: var(--atlas-surface);
+  border: 1px solid var(--atlas-border);
+  border-radius: var(--atlas-radius);
+  padding: 0.75rem;
+  transition: border-color 120ms ease, box-shadow 120ms ease, transform 120ms ease;
+  list-style: none;
+  height: 100%;
+  overflow: hidden;
+}
+.item-box:hover,
+.product-item:hover {
+  border-color: var(--atlas-primary);
+  box-shadow: var(--atlas-shadow);
+  transform: translateY(-1px);
+}
+.item-box .picture,
+.product-item .picture {
+  position: relative;
+  margin: 0 0 0.75rem;
+  border-radius: var(--atlas-radius-sm);
+  overflow: hidden;
+  background: var(--atlas-surface-alt);
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.item-box .picture a,
+.product-item .picture a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+.item-box .picture a img,
+.product-item .picture a img {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+.item-box .details,
+.product-item .details {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.item-box .product-title,
+.product-item .product-title,
+.item-box .title,
+.product-item .title {
+  margin: 0 0 0.25rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--atlas-ink);
+}
+.item-box .product-title a,
+.product-item .product-title a,
+.item-box .title a,
+.product-item .title a {
+  color: var(--atlas-ink);
+  text-decoration: none;
+}
+.item-box .product-title a:hover,
+.product-item .product-title a:hover,
+.item-box .title a:hover,
+.product-item .title a:hover { color: var(--atlas-primary); }
+.item-box .description,
+.product-item .description {
+  color: var(--atlas-ink-soft);
+  font-size: 0.85rem;
+  line-height: 1.45;
+  margin: 0 0 0.25rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.item-box .prices,
+.product-item .prices {
+  margin: auto 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.4rem 0;
+}
+.item-box .actual-price,
+.product-item .actual-price {
+  color: var(--atlas-ink);
+  font-weight: 700;
+  font-size: 1.1rem;
+  line-height: 1.1;
+}
+.item-box .old-price,
+.product-item .old-price {
+  color: var(--atlas-ink-mute);
+  text-decoration: line-through;
+  font-size: 0.85rem;
+}
+.item-box .buttons,
+.product-item .buttons {
+  margin-top: 0.5rem;
+}
+.item-box .buttons > *,
+.product-item .buttons > * {
+  display: block;
+}
+.item-box .product-box-add-to-cart-button,
+.product-item .product-box-add-to-cart-button {
+  width: 100%;
+  background: var(--atlas-primary);
+  color: #fff;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.65rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  margin: 0;
+  transition: background-color 120ms ease;
+}
+.item-box .product-box-add-to-cart-button:hover,
+.product-item .product-box-add-to-cart-button:hover {
+  background: var(--atlas-primary-strong);
+}
+.item-box .product-rating-box,
+.product-item .product-rating-box {
+  margin: 0 0 0.25rem;
+}
+.item-box .add-info,
+.product-item .add-info {
+  margin-top: auto;
+}
+
+/* ============================================================
+   2b-list. "List" view mode (.product-list) — restore DefaultClean's
+   horizontal row layout, which the card rules above would break.
+   ============================================================ */
+/* List mode still wraps items in .item-grid — flatten it so rows span the
+   full column instead of being trapped in ~300px grid tracks. */
+.product-list .item-grid {
+  display: block;
+}
+.product-list .item-box,
+.product-list .product-item {
+  display: block;
+}
+.product-list .item-box .picture,
+.product-list .product-item .picture {
+  float: left;
+  width: 220px;
+  margin: 0 1.25rem 0.5rem 0;
+}
+.product-list .item-box .details,
+.product-list .product-item .details {
+  display: block;
+}
+.product-list .item-box .prices,
+.product-list .product-item .prices {
+  margin: 0.5rem 0 0;
+  padding: 0;
+}
+.product-list .item-box .add-info,
+.product-list .product-item .add-info {
+  margin-top: 0;
+}
+.product-list .item-box .buttons,
+.product-list .product-item .buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+.product-list .item-box .product-box-add-to-cart-button,
+.product-list .product-item .product-box-add-to-cart-button {
+  width: auto;
+  min-width: 160px;
+}
+.product-list .atlas-buy-now-button {
+  display: inline-block;
+  width: auto;
+  min-width: 160px;
+}
+
+/* ============================================================
+   2c. Product card image carousel (replaces Swiper on catalog
+       pages) + Buy Now button styling.
+   ============================================================ */
+.atlas-card-carousel {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  direction: ltr; /* keep slide order/arrows consistent in RTL stores */
+  overflow: hidden;
+}
+
+.atlas-card-track {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  transition: transform 220ms ease;
+  will-change: transform;
+}
+
+.atlas-card-slide {
+  flex: 0 0 100%;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Neutralize DefaultClean's padding-top square + absolute image
+   inside carousel slides so each slide is a clean full-width frame. */
+.atlas-card-carousel .atlas-card-slide a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+.atlas-card-carousel .atlas-card-slide a:before {
+  content: none;
+  display: none;
+}
+.atlas-card-carousel .atlas-card-slide a img {
+  position: static;
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  object-fit: contain;
+}
+
+.atlas-card-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--atlas-border-strong);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--atlas-ink);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  box-shadow: var(--atlas-shadow-sm);
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+.atlas-card-arrow:hover {
+  background: #fff;
+  border-color: var(--atlas-primary);
+  color: var(--atlas-primary);
+}
+.atlas-card-arrow.prev { left: 8px; }
+.atlas-card-arrow.next { right: 8px; }
+
+.atlas-card-dots {
+  position: absolute;
+  bottom: 8px;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+.atlas-card-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 0;
+  padding: 0;
+  background: rgba(31, 41, 51, 0.25);
+  cursor: pointer;
+  transition: background-color 120ms ease, transform 120ms ease;
+}
+.atlas-card-dot:hover { background: rgba(31, 41, 51, 0.5); }
+.atlas-card-dot.is-active {
+  background: var(--atlas-primary);
+  transform: scale(1.25);
+}
+
+/* Single-image cards keep the baseline square frame (looks intentional).
+   Neutralize DefaultClean's padding-top aspect hack + absolute image so the
+   .picture aspect-ratio box above drives the layout. */
+.item-box .picture > a,
+.product-item .picture > a {
+  width: 100%;
+  height: 100%;
+}
+.item-box .picture > a:before,
+.product-item .picture > a:before {
+  content: none;
+  display: none;
+}
+.item-box .picture > a img,
+.product-item .picture > a img {
+  position: static;
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  object-fit: contain;
+}
+
+/* Add to cart — full-width outline, secondary under the yellow Buy Now. */
+.item-box .product-box-add-to-cart-button,
+.product-item .product-box-add-to-cart-button {
+  display: block;
+  width: 100%;
+  margin: 0 0 0.5rem;
+  padding: 0.6rem 1rem;
+  border: 2px solid var(--atlas-border-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--atlas-ink);
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+.item-box .product-box-add-to-cart-button:hover,
+.product-item .product-box-add-to-cart-button:hover {
+  border-color: var(--atlas-primary);
+  background: var(--atlas-primary-soft);
+  color: var(--atlas-primary-strong);
+}
+
+/* Buy Now — signature yellow, full width, primary action on the card. */
+.atlas-buy-now-button {
+  display: block;
+  width: 100%;
+  margin: 0 0 0.5rem;
+  padding: 0.65rem 1rem;
+  border: 2px solid var(--atlas-accent-strong);
+  border-radius: 999px;
+  background: var(--atlas-accent);
+  color: #1f2933;
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background-color 120ms ease, transform 120ms ease;
+}
+.atlas-buy-now-button:hover {
+  background: var(--atlas-accent-strong);
+  color: #fff;
+}
+.atlas-buy-now-button:active { transform: scale(0.99); }
+
+/* Secondary actions (wishlist / compare) — quiet text links under the CTAs.
+   Scoped under .buttons so they beat the generic ".buttons > * { display:block }". */
+.item-box .buttons .atlas-card-link-btn,
+.product-item .buttons .atlas-card-link-btn {
+  display: inline-block;
+  width: auto;
+  margin: 0.25rem 0.5rem 0 0;
+  padding: 0.15rem 0.25rem;
+  border: 0;
+  background: transparent;
+  color: var(--atlas-ink-soft);
+  font-size: 0.78rem;
+  text-transform: none;
+  letter-spacing: 0;
+  cursor: pointer;
+}
+.item-box .buttons .atlas-card-link-btn:hover,
+.product-item .buttons .atlas-card-link-btn:hover {
+  color: var(--atlas-primary);
+  background: transparent;
+}
+
+/* These wrappers contain the real grid (.item-grid). Keep them as plain
+   blocks — a grid here would trap .item-grid in a single cell and collapse
+   every tile to ~70px. */
+/* ============================================================
+   2d. Hero banner (Swiper widget, HomepageTop zone).
+       Full viewport width — deliberately NOT bound to the body
+       column, so its shape never depends on the content width.
+       Height is capped and cover-cropped instead of stretching.
+   ============================================================ */
+html { overflow-x: clip; } /* 100vw includes the scrollbar; keep it invisible */
+.home-page .nop-slider {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  border-radius: 0;
+  overflow: hidden;
+  background: var(--atlas-surface-alt);
+}
+.nop-slider .swiper-slide { text-align: center; }
+.nop-slider .swiper-slide a { display: block; line-height: 0; }
+.nop-slider .slider-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: 320px;
+  max-height: 620px;
+  object-fit: cover;
+}
+/* Clean fade backdrop (no gray flash between slides). */
+.home-page .nop-slider { background: #fff; }
+
+/* Soft bottom scrim — depth + keeps indicators readable over any image. */
+.nop-slider::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 120px;
+  background: linear-gradient(to top, rgba(15, 23, 42, 0.3), transparent);
+  pointer-events: none;
+}
+
+/* Slow Ken Burns drift on the active slide — keeps the hero alive. */
+.nop-slider .swiper-slide img { transition: transform 7s ease; }
+.nop-slider .swiper-slide-active img { transform: scale(1.045); }
+
+/* Refined indicators — white pills over the scrim (readable on any image). */
+.nop-slider .swiper-pagination { bottom: 16px; z-index: 5; }
+.nop-slider .swiper-pagination-bullet {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.45);
+  opacity: 1;
+  margin: 0 5px;
+  transition: width 180ms ease, background-color 120ms ease;
+}
+.nop-slider .swiper-pagination-bullet:hover { background: rgba(255, 255, 255, 0.8); }
+.nop-slider .swiper-pagination-bullet-active {
+  width: 32px;
+  background: #fff;
+}
+
+/* Glassy arrows (injected by atlas.js) — revealed on hover, always on touch. */
+.atlas-hero-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 6;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.88);
+  color: #1f2933;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.18);
+  opacity: 0;
+  transition: opacity 160ms ease, background-color 120ms ease, color 120ms ease;
+}
+.nop-slider:hover .atlas-hero-arrow,
+.atlas-hero-arrow:focus-visible { opacity: 1; }
+@media (hover: none) { .atlas-hero-arrow { opacity: 1; } }
+.atlas-hero-prev { left: 16px; }
+.atlas-hero-next { right: 16px; }
+.atlas-hero-arrow svg { width: 20px; height: 20px; }
+.atlas-hero-arrow:hover { background: #fff; color: var(--atlas-primary); }
+/* Edge states — dimmed; the JS guard ignores the click (pointer-events must
+   stay auto or clicks would fall through to the slide's link). */
+.nop-slider.is-at-start .atlas-hero-prev,
+.nop-slider.is-at-end .atlas-hero-next {
+  background: rgba(255, 255, 255, 0.4);
+  color: rgba(31, 41, 51, 0.35);
+}
+
+.home-page-category-grid,
+.sub-category-grid,
+.manufacturer-grid,
+.vendor-grid {
+  display: block;
+  margin: 0 0 1.5rem;
+  padding: 0;
+  list-style: none;
+}
+.home-page-category-grid .item-box,
+.sub-category-grid .item-box {
+  text-align: center;
+  padding: 0.5rem;
+  list-style: none;
+}
+.home-page-category-grid .title,
+.sub-category-grid .title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0.5rem 0 0;
+}
+
+/* Sidebar blocks — clean list, no squares, no bullets */
+.side-2 .block,
+.side-3 .block,
+.block {
+  background: var(--atlas-surface);
+  border: 1px solid var(--atlas-border);
+  border-radius: var(--atlas-radius);
+  padding: 1rem 1.25rem;
+  margin: 0 0 1rem;
+  box-shadow: var(--atlas-shadow-sm);
+}
+.block .title {
+  margin: 0 0 0.75rem;
+  padding: 0 0 0.5rem;
+  border-bottom: 1px solid var(--atlas-border);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--atlas-ink);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.block .listbox,
+.block .list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.block .list li {
+  display: block;
+  position: relative;
+  padding: 0.45rem 0 0.45rem 0.75rem;
+  border-bottom: 1px solid var(--atlas-border);
+  list-style: none;
+}
+.block .list li:last-child { border-bottom: 0; }
+.block .list a {
+  display: inline-block;
+  padding: 0;
+  font-size: 0.95rem;
+  color: var(--atlas-ink);
+  text-decoration: none;
+  font-weight: 500;
+  position: static;
+}
+.block .list a:before { display: none; }
+.block .list a:hover { color: var(--atlas-primary); }
+.block .list .active > a { color: var(--atlas-primary); font-weight: 700; }
+.block .sublist {
+  margin: 0.25rem 0 0.25rem 0.75rem;
+  padding: 0;
+  list-style: none;
+}
+.block .sublist a {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--atlas-ink-soft);
+  padding: 0.2rem 0;
+}
+.block .sublist a:hover { color: var(--atlas-primary); }
+
+/* ============================================================
+   3. Product details page — Walmart-tier layout.
+   ============================================================ */
+.atlas-product-page {
+  font-family: var(--atlas-font);
+}
+
+/* Grid: gallery on the left, sticky info on the right. */
+.atlas-product-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 440px;
+  gap: 2.5rem;
+  margin: 0;
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .atlas-product-grid { grid-template-columns: minmax(0, 1fr) 400px; }
+}
+@media (max-width: 992px) {
+  .atlas-product-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+/* Left rail: gallery zone */
+.atlas-product-gallery {
+  position: relative;
+  min-width: 0;
+}
+
+.atlas-gallery {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  grid-template-areas:
+    "thumbs main";
+  gap: 14px;
+  align-items: flex-start;
+}
+@media (max-width: 991px) {
+  .atlas-gallery {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "main"
+      "thumbs";
+    gap: 10px;
+  }
+}
+.atlas-gallery-thumbs { grid-area: thumbs; }
+.atlas-gallery-main-wrapper { grid-area: main; }
+
+.atlas-gallery-main-wrapper {
+  position: relative;
+  background: var(--atlas-surface);
+  border: 1px solid var(--atlas-border);
+  border-radius: var(--atlas-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--atlas-shadow);
+}
+
+.atlas-gallery-main {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: var(--atlas-surface-alt);
+  position: relative;
+  overflow: hidden;
+  cursor: zoom-in;
+}
+
+.atlas-gallery-track {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  transition: transform 360ms cubic-bezier(.4, 0, .2, 1);
+  will-change: transform;
+}
+
+.atlas-gallery-slide {
+  flex: 0 0 100%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--atlas-surface);
+  cursor: zoom-in;
+  position: relative;
+}
+.atlas-gallery-slide img {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  background: var(--atlas-surface);
+  user-select: none;
+  -webkit-user-drag: none;
+  transition: transform 220ms ease;
+}
+.atlas-gallery-slide:hover img {
+  transform: scale(1.04);
+}
+
+.atlas-gallery-zoom-hint {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  border: 0;
+  box-shadow: var(--atlas-shadow-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--atlas-ink);
+  z-index: 3;
+  transition: background-color 120ms ease, transform 120ms ease;
+}
+.atlas-gallery-zoom-hint:hover { background: #fff; transform: scale(1.06); }
+.atlas-gallery-zoom-hint svg { display: block; }
+
+.atlas-gallery-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: var(--atlas-shadow);
+  z-index: 3;
+  cursor: pointer;
+  color: var(--atlas-ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 180ms ease, transform 120ms ease, background-color 120ms ease;
+}
+.atlas-gallery-main:hover .atlas-gallery-arrow { opacity: 1; }
+.atlas-gallery-arrow:hover { background: #fff; transform: translateY(-50%) scale(1.06); }
+.atlas-gallery-arrow svg { display: block; }
+.atlas-gallery-prev { left: 12px; }
+.atlas-gallery-next { right: 12px; }
+
+.atlas-gallery-counter {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  z-index: 3;
+  background: rgba(15, 23, 42, 0.72);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  letter-spacing: 0.04em;
+}
+.atlas-gallery-counter-current { color: var(--atlas-accent); }
+.atlas-gallery-counter-sep { margin: 0 0.2rem; opacity: 0.55; }
+
+/* Thumbnails — vertical on desktop, horizontal on mobile */
+.atlas-gallery-thumbs {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  max-height: 540px;
+  min-height: 360px;
+}
+@media (max-width: 991px) {
+  .atlas-gallery-thumbs {
+    flex-direction: row;
+    max-height: none;
+    min-height: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    gap: 8px;
+  }
+}
+
+.atlas-gallery-thumbs-track {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 24px 0;
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: var(--atlas-border-strong) transparent;
+}
+.atlas-gallery-thumbs-track::-webkit-scrollbar { width: 4px; }
+.atlas-gallery-thumbs-track::-webkit-scrollbar-thumb {
+  background: var(--atlas-border-strong);
+  border-radius: 4px;
+}
+@media (max-width: 991px) {
+  .atlas-gallery-thumbs-track {
+    flex-direction: row;
+    padding: 0;
+    overflow-y: hidden;
+    overflow-x: auto;
+  }
+}
+
+.atlas-gallery-thumb {
+  flex: 0 0 auto;
+  width: 84px;
+  height: 84px;
+  padding: 2px;
+  border: 1px solid var(--atlas-border);
+  border-radius: var(--atlas-radius-sm);
+  background: var(--atlas-surface);
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 140ms ease, box-shadow 140ms ease, transform 120ms ease;
+  position: relative;
+}
+.atlas-gallery-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: calc(var(--atlas-radius-sm) - 2px);
+  display: block;
+}
+.atlas-gallery-thumb:hover {
+  border-color: var(--atlas-primary);
+  transform: translateY(-1px);
+}
+.atlas-gallery-thumb--active {
+  border-color: var(--atlas-primary);
+  box-shadow: 0 0 0 2px rgba(0, 113, 206, 0.35);
+}
+.atlas-gallery-thumb--active::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--atlas-radius-sm);
+  pointer-events: none;
+  box-shadow: inset 0 0 0 2px var(--atlas-primary);
+}
+
+.atlas-gallery-thumbs-arrow {
+  width: 100%;
+  height: 24px;
+  border: 0;
+  background: transparent;
+  color: var(--atlas-ink-soft);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.atlas-gallery-thumbs-arrow:hover { color: var(--atlas-primary); }
+.atlas-gallery-thumbs-arrow:disabled { opacity: 0.35; cursor: default; }
+@media (max-width: 991px) {
+  .atlas-gallery-thumbs-arrow { display: none; }
+}
+
+/* Lightbox overlay — full-screen image viewer */
+.atlas-lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 8, 23, 0.92);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.atlas-lightbox[hidden] { display: none; }
+.atlas-lightbox-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  cursor: pointer;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 120ms ease, transform 120ms ease;
+}
+.atlas-lightbox-close:hover { background: rgba(255, 255, 255, 0.22); transform: rotate(90deg); }
+.atlas-lightbox-stage {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  max-width: 100%;
+  max-height: 100%;
+}
+.atlas-lightbox-img {
+  max-width: 100%;
+  max-height: calc(100vh - 4rem);
+  object-fit: contain;
+  background: var(--atlas-surface);
+  border-radius: var(--atlas-radius);
+  box-shadow: var(--atlas-shadow-lg);
+  cursor: zoom-out;
+}
+.atlas-lightbox-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 56px;
+  height: 56px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  cursor: pointer;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 120ms ease, transform 120ms ease;
+}
+.atlas-lightbox-nav:hover { background: rgba(255, 255, 255, 0.22); transform: translateY(-50%) scale(1.06); }
+.atlas-lightbox-prev { left: 24px; }
+.atlas-lightbox-next { right: 24px; }
+.atlas-lightbox-counter {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.95rem;
+  font-weight: 500;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  letter-spacing: 0.04em;
+}
+
+/* Right rail: product info — sticky on desktop for long pages */
+.atlas-product-overview .overview {
+  position: sticky;
+  top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  background: var(--atlas-surface);
+  border-radius: var(--atlas-radius);
+  padding: 1.25rem 1.25rem 1.5rem;
+  border: 1px solid var(--atlas-border);
+  box-shadow: var(--atlas-shadow-sm);
+}
+@media (max-width: 992px) {
+  .atlas-product-overview .overview {
+    position: static;
+  }
+}
+
+.atlas-product-overview .product-name h1 {
+  margin: 0 0 0.25rem;
+  font-family: var(--atlas-font);
+  font-size: 1.5rem;
+  line-height: 1.25;
+  font-weight: 600;
+  color: var(--atlas-ink);
+  letter-spacing: -0.01em;
+}
+
+.atlas-product-overview .short-description {
+  color: var(--atlas-ink-soft);
+  font-size: 0.95rem;
+}
+
+/* Reviews row */
+.atlas-product-overview .product-review-box,
+.atlas-product-overview ._product-review-overview {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.95rem;
+  color: var(--atlas-ink-soft);
+}
+.atlas-product-overview .review-list {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Prices — Walmart-style prominent */
+.atlas-product-page .prices {
+  background: var(--atlas-surface-alt);
+  border-radius: var(--atlas-radius);
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--atlas-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.atlas-product-page .price {
+  color: var(--atlas-ink);
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+.atlas-product-page .old-price {
+  color: var(--atlas-ink-mute);
+  text-decoration: line-through;
+  font-size: 1rem;
+}
+.atlas-product-page .savings {
+  color: var(--atlas-success);
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+/* Add-to-cart surface — moved INSIDE the overview already in template,
+   but make the buttons feel primary. */
+.atlas-add-to-cart {
+  margin-top: 0.25rem;
+}
+
+.atlas-add-to-cart .qty-label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-weight: 600;
+  color: var(--atlas-ink-soft);
+  font-size: 0.9rem;
+}
+.atlas-add-to-cart .qty-input,
+.atlas-add-to-cart .qty-dropdown {
+  display: inline-block;
+  width: 80px;
+  height: 44px;
+  padding: 0 0.5rem;
+  border: 1px solid var(--atlas-border-strong);
+  border-radius: var(--atlas-radius-sm);
+  font: inherit;
+  margin: 0 0 0.75rem;
+}
+
+.atlas-atc-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+/* Buttons — Walmart-style: full-width, big, primary blue + secondary outline */
+.atlas-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 52px;
+  padding: 0 1.25rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font: inherit;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 120ms ease, transform 80ms ease, border-color 120ms ease, color 120ms ease;
+  text-align: center;
+  line-height: 1;
+  width: 100%;
+}
+.atlas-btn:focus-visible {
+  outline: 3px solid var(--atlas-primary-soft);
+  outline-offset: 2px;
+}
+.atlas-btn:active { transform: translateY(1px); }
+
+.atlas-btn-primary {
+  background: var(--atlas-primary);
+  color: #fff;
+  border-color: var(--atlas-primary);
+}
+.atlas-btn-primary:hover {
+  background: var(--atlas-primary-strong);
+  border-color: var(--atlas-primary-strong);
+}
+
+.atlas-btn-accent {
+  background: #ffffff;
+  color: var(--atlas-ink);
+  border-color: var(--atlas-border-strong);
+}
+.atlas-btn-accent:hover {
+  background: var(--atlas-surface-alt);
+  border-color: var(--atlas-primary);
+  color: var(--atlas-primary);
+}
+
+.atlas-btn-secondary {
+  background: #fff;
+  color: var(--atlas-ink);
+  border-color: var(--atlas-ink);
+}
+.atlas-btn-secondary:hover { background: var(--atlas-ink); color: #fff; }
+
+/* Fulfillment ribbon — 3-up icon row (Pickup, Delivery, Shipping) */
+.atlas-fulfillment {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  border: 1px solid var(--atlas-border);
+  border-radius: var(--atlas-radius);
+  background: var(--atlas-surface);
+  overflow: hidden;
+  margin-top: 0.25rem;
+  min-height: 70px;
+}
+.atlas-fulfillment__cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.6rem 0.5rem;
+  text-align: center;
+  border-right: 1px solid var(--atlas-border);
+  font-size: 0.8rem;
+  color: var(--atlas-ink);
+  position: relative;
+  min-width: 0;
+}
+.atlas-fulfillment__cell:last-child { border-right: 0; }
+.atlas-fulfillment__cell strong {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--atlas-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.atlas-fulfillment__cell small {
+  color: var(--atlas-ink-soft);
+  font-size: 0.7rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.atlas-fulfillment__icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--atlas-primary-soft);
+  color: var(--atlas-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+.atlas-fulfillment__icon svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+}
+
+/* Description / specs section */
+.atlas-product-section,
+.atlas-product-collateral {
+  margin-top: 2rem;
+  background: var(--atlas-surface);
+  border: 1px solid var(--atlas-border);
+  border-radius: var(--atlas-radius);
+  padding: 1.5rem;
+  box-shadow: var(--atlas-shadow-sm);
+}
+.atlas-section-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--atlas-ink);
+}
+.atlas-product-collateral { display: grid; gap: 1.5rem; }
+
+/* Tabs */
+.atlas-product-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--atlas-border);
+  margin: 0 0 1rem;
+}
+.atlas-product-tabs button {
+  background: transparent;
+  border: 0;
+  padding: 0.75rem 1.25rem;
+  font: inherit;
+  font-weight: 600;
+  color: var(--atlas-ink-soft);
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+}
+.atlas-product-tabs button[aria-selected="true"] {
+  color: var(--atlas-primary);
+  border-bottom-color: var(--atlas-primary);
+}
+
+/* Pills — manufacturers/tags */
+.atlas-product-page .product-tags-list,
+.atlas-product-page .product-manufacturers-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.atlas-product-page .product-tags-list li a,
+.atlas-product-page .product-manufacturers-list li a {
+  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: var(--atlas-primary-soft);
+  color: var(--atlas-primary-strong);
+  font-size: 0.85rem;
+}
+
+/* Wishlist / compare / email icons row */
+.atlas-product-page .overview-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+.atlas-product-page .overview-buttons a {
+  color: var(--atlas-ink-soft);
+  font-size: 0.9rem;
+}
+.atlas-product-page .overview-buttons a:hover { color: var(--atlas-primary); }
+
+/* ============================================================
+   4. Mobile sticky action bar with both buttons + price.
+   ============================================================ */
+.atlas-sticky-atc {
+  display: none;
+}
+@media (max-width: 767.98px) {
+  .atlas-sticky-atc {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 1rem calc(0.65rem + env(safe-area-inset-bottom));
+    background: var(--atlas-surface);
+    border-top: 1px solid var(--atlas-border);
+    box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.08);
+  }
+  .atlas-sticky-atc .atlas-btn { min-height: 46px; }
+  .atlas-sticky-atc-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0.5rem;
+    flex: 1;
+  }
+  .atlas-sticky-atc-price {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    line-height: 1.1;
+    min-width: 0;
+    flex-shrink: 1;
+  }
+  .atlas-sticky-atc-price__label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--atlas-ink-soft);
+    font-weight: 600;
+  }
+  .atlas-sticky-atc-price__value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--atlas-ink);
+    max-width: 110px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .atlas-sticky-atc-price__value.is-empty::before {
+    content: "—";
+    color: var(--atlas-ink-mute);
+  }
+  /* Reserve space at the bottom of the page so the fixed bar doesn't
+     cover the last content (specs, reviews, related products). */
+  body:has(.atlas-sticky-atc) { padding-bottom: 84px; }
+}
+
+/* ============================================================
+   5. Footer — neutral.
+   ============================================================ */
+.footer,
+.master-footer,
+.footer-wrapper {
+  background: #002952;
+  color: #ffffff;
+  border-top: 1px solid var(--atlas-border);
+  padding: 1.5rem 1rem;
+}
+.footer a,
+.master-footer a { color: var(--atlas-accent); }
+.footer a:hover,
+.master-footer a:hover { color: #fff; }
+.footer .footer-disclaimer,
+.footer .footer-poweredby {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85rem;
+}
+.footer-menu { list-style: none; padding: 0; margin: 0 0 1rem; }
+.footer-menu__item { display: inline-block; margin-right: 1rem; }
+.footer-menu__item a { color: #fff; text-transform: uppercase; font-size: 0.85rem; }
