@@ -498,13 +498,16 @@ h1, h2, h3, h4, h5, h6 {
   float: none;
   margin: 0;
 }
-/* DefaultClean's page-scoped rules (.product-details-page /
+/* DefaultClean's page-scoped rules (.home-page / .product-details-page /
    .shopping-cart-page .product-grid .item-box{width:24%}) out-specificity
-   the reset above and collapse "also bought" cards to ~75px. Match their
-   specificity — we load last, so we win. */
+   the reset above and collapse cards to ~75px. Match their specificity —
+   we load last, so we win. */
+.home-page .product-grid .item-box,
 .product-details-page .product-grid .item-box,
 .shopping-cart-page .product-grid .item-box {
   width: auto;
+  float: none;
+  margin: 0;
 }
 .item-box,
 .product-item {
